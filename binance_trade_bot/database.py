@@ -238,11 +238,13 @@ class Database:
                 self.logger.info(f".current_coin file found, loading current coin {coin}")
                 self.set_current_coin(coin)
             os.rename(".current_coin", ".current_coin.old")
-            self.logger.info(f".current_coin renamed to .current_coin.old - You can now delete this file")
+            self.logger.info(
+                ".current_coin renamed to .current_coin.old - You can now delete this file"
+            )
 
         if os.path.isfile(".current_coin_table"):
             with open(".current_coin_table") as f:
-                self.logger.info(f".current_coin_table file found, loading into database")
+                self.logger.info(".current_coin_table file found, loading into database")
                 table: dict = json.load(f)
                 session: Session
                 with self.db_session() as session:

@@ -53,7 +53,9 @@ class AutoTrader:
         """
 
         if coin_price is None:
-            self.logger.info("Skipping update... current coin {} not found".format(coin + self.config.BRIDGE))
+            self.logger.info(
+                f"Skipping update... current coin {coin + self.config.BRIDGE} not found"
+            )
             return
 
         session: Session
@@ -63,7 +65,7 @@ class AutoTrader:
 
                 if from_coin_price is None:
                     self.logger.info(
-                        "Skipping update for coin {} not found".format(pair.from_coin + self.config.BRIDGE)
+                        f"Skipping update for coin {pair.from_coin + self.config.BRIDGE} not found"
                     )
                     continue
 
@@ -85,14 +87,14 @@ class AutoTrader:
                 from_coin_price = all_tickers.get_price(pair.from_coin + self.config.BRIDGE)
                 if from_coin_price is None:
                     self.logger.info(
-                        "Skipping initializing {}, symbol not found".format(pair.from_coin + self.config.BRIDGE)
+                        f"Skipping initializing {pair.from_coin + self.config.BRIDGE}, symbol not found"
                     )
                     continue
 
                 to_coin_price = all_tickers.get_price(pair.to_coin + self.config.BRIDGE)
                 if to_coin_price is None:
                     self.logger.info(
-                        "Skipping initializing {}, symbol not found".format(pair.to_coin + self.config.BRIDGE)
+                        f"Skipping initializing {pair.to_coin + self.config.BRIDGE}, symbol not found"
                     )
                     continue
 
@@ -115,7 +117,7 @@ class AutoTrader:
 
             if optional_coin_price is None:
                 self.logger.info(
-                    "Skipping scouting... optional coin {} not found".format(pair.to_coin + self.config.BRIDGE)
+                    f"Skipping scouting... optional coin {pair.to_coin + self.config.BRIDGE} not found"
                 )
                 continue
 
@@ -139,11 +141,7 @@ class AutoTrader:
         """
         ratio_dict = self._get_ratios(coin, coin_price, all_tickers)
 
-        # keep only ratios bigger than zero
-        ratio_dict = {k: v for k, v in ratio_dict.items() if v > 0}
-
-        # if we have any viable options, pick the one with the biggest ratio
-        if ratio_dict:
+        if ratio_dict := {k: v for k, v in ratio_dict.items() if v > 0}:
             best_pair = max(ratio_dict, key=ratio_dict.get)
             self.logger.info(f"Will be jumping from {coin} to {best_pair.to_coin_id}")
             self.transaction_through_bridge(best_pair, all_tickers)
@@ -162,12 +160,14 @@ class AutoTrader:
                 continue
 
             ratio_dict = self._get_ratios(coin, current_coin_price, all_tickers)
-            if not any(v > 0 for v in ratio_dict.values()):
-                # There will only be one coin where all the ratios are negative. When we find it, buy it if we can
-                if bridge_balance > self.manager.get_min_notional(coin.symbol, self.config.BRIDGE.symbol):
-                    self.logger.info(f"Will be purchasing {coin} using bridge coin")
-                    self.manager.buy_alt(coin, self.config.BRIDGE, all_tickers)
-                    return coin
+            if all(
+                v <= 0 for v in ratio_dict.values()
+            ) and bridge_balance > self.manager.get_min_notional(
+                coin.symbol, self.config.BRIDGE.symbol
+            ):
+                self.logger.info(f"Will be purchasing {coin} using bridge coin")
+                self.manager.buy_alt(coin, self.config.BRIDGE, all_tickers)
+                return coin
         return None
 
     def update_values(self):
@@ -185,8 +185,8 @@ class AutoTrader:
                 balance = self.manager.get_currency_balance(coin.symbol)
                 if balance == 0:
                     continue
-                usd_value = all_ticker_values.get_price(coin + "USDT")
-                btc_value = all_ticker_values.get_price(coin + "BTC")
+                usd_value = all_ticker_values.get_price(f"{coin}USDT")
+                btc_value = all_ticker_values.get_price(f"{coin}BTC")
                 cv = CoinValue(coin, balance, usd_value, btc_value, datetime=now)
                 session.add(cv)
                 self.db.send_update(cv)

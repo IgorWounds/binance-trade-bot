@@ -166,7 +166,7 @@ def backtest(
     config = config or Config()
     logger = Logger("backtesting", enable_notifications=False)
 
-    end_date = end_date or datetime.today()
+    end_date = end_date or datetime.now()
 
     db = MockDatabase(logger, config)
     db.create_database()
