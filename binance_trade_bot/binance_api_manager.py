@@ -60,9 +60,7 @@ class BinanceAPIManager:
                 return base_fee
             fee_amount_bnb = fee_amount * origin_price
         bnb_balance = self.get_currency_balance("BNB")
-        if bnb_balance >= fee_amount_bnb:
-            return base_fee * 0.75
-        return base_fee
+        return base_fee * 0.75 if bnb_balance >= fee_amount_bnb else base_fee
 
     def get_account(self):
         """
@@ -80,19 +78,29 @@ class BinanceAPIManager:
         """
         Get ticker price of a specific coin
         """
-        for ticker in self.binance_client.get_symbol_ticker():
-            if ticker["symbol"] == ticker_symbol:
-                return float(ticker["price"])
-        return None
+        return next(
+            (
+                float(ticker["price"])
+                for ticker in self.binance_client.get_symbol_ticker()
+                if ticker["symbol"] == ticker_symbol
+            ),
+            None,
+        )
 
     def get_currency_balance(self, currency_symbol: str):
         """
         Get balance of a specific coin
         """
-        for currency_balance in self.binance_client.get_account()["balances"]:
-            if currency_balance["asset"] == currency_symbol:
-                return float(currency_balance["free"])
-        return None
+        return next(
+            (
+                float(currency_balance["free"])
+                for currency_balance in self.binance_client.get_account()[
+                    "balances"
+                ]
+                if currency_balance["asset"] == currency_symbol
+            ),
+            None,
+        )
 
     def retry(self, func, *args, **kwargs):
         time.sleep(1)

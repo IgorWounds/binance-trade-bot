@@ -28,7 +28,9 @@ class Strategy(AutoTrader):
         current_coin_price = all_tickers.get_price(current_coin + self.config.BRIDGE)
 
         if current_coin_price is None:
-            self.logger.info("Skipping scouting... current coin {} not found".format(current_coin + self.config.BRIDGE))
+            self.logger.info(
+                f"Skipping scouting... current coin {current_coin + self.config.BRIDGE} not found"
+            )
             return
 
         self._jump_to_best_coin(current_coin, current_coin_price, all_tickers)
@@ -48,21 +50,22 @@ class Strategy(AutoTrader):
         """
         Decide what is the current coin, and set it up in the DB.
         """
-        if self.db.get_current_coin() is None:
-            current_coin_symbol = self.config.CURRENT_COIN_SYMBOL
-            if not current_coin_symbol:
-                current_coin_symbol = random.choice(self.config.SUPPORTED_COIN_LIST)
+        if self.db.get_current_coin() is not None:
+            return
+        current_coin_symbol = self.config.CURRENT_COIN_SYMBOL
+        if not current_coin_symbol:
+            current_coin_symbol = random.choice(self.config.SUPPORTED_COIN_LIST)
 
-            self.logger.info(f"Setting initial coin to {current_coin_symbol}")
+        self.logger.info(f"Setting initial coin to {current_coin_symbol}")
 
-            if current_coin_symbol not in self.config.SUPPORTED_COIN_LIST:
-                sys.exit("***\nERROR!\nSince there is no backup file, a proper coin name must be provided at init\n***")
-            self.db.set_current_coin(current_coin_symbol)
+        if current_coin_symbol not in self.config.SUPPORTED_COIN_LIST:
+            sys.exit("***\nERROR!\nSince there is no backup file, a proper coin name must be provided at init\n***")
+        self.db.set_current_coin(current_coin_symbol)
 
-            # if we don't have a configuration, we selected a coin at random... Buy it so we can start trading.
-            if self.config.CURRENT_COIN_SYMBOL == "":
-                current_coin = self.db.get_current_coin()
-                self.logger.info(f"Purchasing {current_coin} to begin trading")
-                all_tickers = self.manager.get_all_market_tickers()
-                self.manager.buy_alt(current_coin, self.config.BRIDGE, all_tickers)
-                self.logger.info("Ready to start trading")
+        # if we don't have a configuration, we selected a coin at random... Buy it so we can start trading.
+        if self.config.CURRENT_COIN_SYMBOL == "":
+            current_coin = self.db.get_current_coin()
+            self.logger.info(f"Purchasing {current_coin} to begin trading")
+            all_tickers = self.manager.get_all_market_tickers()
+            self.manager.buy_alt(current_coin, self.config.BRIDGE, all_tickers)
+            self.logger.info("Ready to start trading")
